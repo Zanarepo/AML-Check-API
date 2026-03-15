@@ -41,6 +41,12 @@ def log_audit_trail(org_id: str, endpoint: str, query: dict, status: int, db: Cl
         # In a real app, send this to Sentry or Datadog
         print(f"Failed to write audit log: {e}")
 
+from sentence_transformers import SentenceTransformer
+
+# --- Initialize AI Model ---
+print("Loading AI Embedding Model (all-MiniLM-L6-v2)...")
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
 # --- API Routes ---
 
 @app.get("/")
@@ -55,38 +61,32 @@ async def screen_entity(
     db: Client = Depends(get_supabase_client)
 ):
     """
-    Search an individual or entity against the unified global API watchlists.
-    Requires header: Authorization: Bearer <API_KEY>
+    Search an individual or entity against the unified global API watchlists
+    using high-speed AI vector similarity (Fuzzy Matching).
     """
     try:
-        # Note: In a production pgvector setup without an embedding model directly in PG, 
-        # you would need to convert `request.search_term` into a vector embedding here
-        # using OpenAI or MiniLM via the `sentence-transformers` library before querying Supabase.
-        #
-        # pseudo-code:
-        # embedding = generate_embedding(request.search_term)
-        # response = db.rpc('match_sanctions', {'query_embedding': embedding, 'match_threshold': request.fuzziness_threshold}).execute()
+        # 1. Generate the Embedding for the search term
+        embedding = model.encode(request.search_term).tolist()
         
-        # --- MVP MOCK Response for demonstration ---
-        # This simulates Supabase returning a fuzzy match
-        mock_hit = False
+        # 2. Call the Supabase RPC function (match_sanctions)
+        # This function performs the cosine similarity search in the DB
+        rpc_response = db.rpc('match_sanctions', {
+            'query_embedding': embedding,
+            'match_threshold': request.fuzziness_threshold,
+            'match_count': 5
+        }).execute()
         
-        if "osama" in request.search_term.lower() or "igwilo" in request.search_term.lower():
-            mock_hit = True
+        results = rpc_response.data if rpc_response.data else []
+        match_found = len(results) > 0
+        
+        # Calculate highest confidence score
+        confidence_score = results[0]['similarity'] if match_found else 0.0
 
         response_data = {
-            "match_found": mock_hit,
-            "confidence_score": 0.94 if mock_hit else 0.0,
+            "match_found": match_found,
+            "confidence_score": round(confidence_score, 4),
             "search_term_used": request.search_term,
-            "results": [
-                {
-                    "entity_name": "Osondu Victor IGWILO",
-                    "source": "FBI_WANTED / NIGERIA_EFCC",
-                    "reason": "Wire Fraud, Money Laundering",
-                    "aliases": ["Victor Igwilo"],
-                    "source_url": "https://efcc.gov.ng"
-                }
-            ] if mock_hit else [],
+            "results": results,
             "meta": {
                 "organization_id": organization['id'],
                 "organization_tier": organization['plan_tier'],
@@ -95,7 +95,7 @@ async def screen_entity(
             }
         }
         
-        # Run the audit logging in the background so it doesn't slow down the response time!
+        # Log successful audit trail
         background_tasks.add_task(
             log_audit_trail, 
             org_id=organization['id'], 
@@ -108,6 +108,7 @@ async def screen_entity(
         return response_data
 
     except Exception as e:
+        print(f"Screening Error: {e}")
         background_tasks.add_task(
             log_audit_trail, 
             org_id=organization['id'], 
@@ -116,4 +117,4 @@ async def screen_entity(
             status=500, 
             db=db
         )
-        return {"error": str(e), "match_found": False}
+        return {"error": "Internal Server Error during screening", "match_found": False}

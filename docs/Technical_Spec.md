@@ -86,10 +86,11 @@ Because we handle sensitive financial data and API key infrastructure, security 
 
 ## 5. API Design (The MVP Endpoint)
 
-### `POST /v1/screen`
-**Headers:**
-*   `Authorization: Bearer sk_live_...`
-*   `Content-Type: application/json`
+### Fuzzy Searching Logic
+*   **Model:** `sentence-transformers/all-MiniLM-L6-v2` (chosen for the balance of speed and accuracy).
+*   **Dimensions:** 384 dimensions.
+*   **Search Method:** Cosine Similarity via PostgeSQL `pgvector`.
+*   **Threshold:** Default 0.8 (user-configurable via API).
 
 **Request Body:**
 ```json

@@ -4,3 +4,5 @@ pydantic
 supabase
 slowapi
 python-dotenv
+pydantic-settings
+pdfplumber
