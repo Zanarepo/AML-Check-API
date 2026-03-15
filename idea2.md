@@ -1,0 +1,23 @@
+That is a very smart pivot. Dealing with legacy enterprise gatekeepers (like freight EDIs) can take years and hundreds of thousands of dollars just to get the "keys."
+
+The best API businesses built by indie hackers and startups today follow a simple formula: Find valuable data that is 100% free and public, but is scattered across the internet in terrible formats (PDFs, messy CSVs, or unstandardized websites). The value of your API is doing the dirty work of scraping, cleaning, and standardizing that data into a beautiful JSON feed.
+
+Here are 5 highly valuable B2B API ideas where all the underlying data is freely available online right now:
+
+1. The Global Product Recalls API
+The Problem: E-commerce sites, retail inventory systems, and hospital supply chains need to know instantly if a product they are selling has just been recalled because it’s dangerous. Where the free data is: The data is entirely public, but it is scattered across dozens of different government websites globally (US Consumer Product Safety Commission, FDA, US Dept of Transportation, EU Safety Gate, Food Standards Agency in the UK). Your API Product: You build scrapers that monitor these 50+ government websites daily. Your API provides a single /check endpoint. A developer at Shopify or a hospital passes a UPC barcode or product name, and your API returns true or false if it is recalled, along with the official reason and risk level.
+
+2. The Real-Time Sanctions & Compliance API (KYC/AML)
+The Problem: Every single Fintech app, crypto exchange, and online bank is legally required to check if a new user is a known terrorist or on a government sanctions list before letting them open an account (Know Your Customer / Anti-Money Laundering). Where the free data is: The US Treasury (OFAC), the United Nations, and the UK government publish these lists for free. The problem? They are published as massive, messy XML or CSV files that update randomly. Your API Product: You download these free lists daily, put them in a fast database, and build an API with "fuzzy matching" (so if a user types "Jon Doe" it still flags "John Doe"). Fintech startups would gladly pay $99/month for a simple API rather than building the infrastructure to download government CSVs every morning.
+
+3. The WARN Act / Company Layoffs Tracker API
+The Problem: B2B sales teams and recruiting agencies desperately want to know when a company is doing massive layoffs (so they can pitch their cheaper software, or recruit the fired engineers). Where the free data is: In the US, the "WARN Act" legally requires companies to notify the government 60 days before a mass layoff. This data is 100% public. The catch? It is published independently by all 50 state governments, often in terrible formats like scanned PDFs or 1990s HTML tables. Your API Product: You aggregate all 50 state WARN databases into one clean feed. Sales acceleration tools (like Apollo or ZoomInfo) or recruiting software would pay heavily for a /layoffs?company=Stripe endpoint.
+
+4. Universal Local Events API
+The Problem: Hotel apps, local news sites, travel planners, and AI agents want to be able to tell users, "Here are 5 cool things happening in your city tonight." Where the free data is: The data is public, but highly fragmented across Facebook Events, Eventbrite (which has a free tier), Meetup.com, local city council websites, and municipal calendars. Your API Product: You scrape and aggregate these different sources, standardize the categories (Music, Tech, Food, Nightlife), and offer a /events?lat=40.71&long=-74.00&radius=5 endpoint. Travel tech companies would eat this up to power their "What to do in New York" widgets.
+
+5. Website Terms of Service "Changes" API
+The Problem: Companies use hundreds of SaaS apps. Recently, many SaaS companies have quietly changed their Privacy Policies to say, "We now have the right to train our AI on your private data." Legal and security teams are terrified of this but cannot manually read the Terms of Service for 500 tools every day. Where the free data is: Every company's Terms of Service page is public on their website (e.g., notion.so/terms). Your API Product: You run a daily scraper scraping the /terms and /privacy pages of the top 10,000 B2B software tools. You run a quick text-diff (or pass it to a cheap LLM to check if the meaning changed materially). You offer an API to enterprise security tools that fires a webhook: "Alert: Slack just updated their privacy policy regarding user data at 2:00 PM today."
+
+All of these rely on taking something that is free but frustrating, and turning it into something developers can integrate in 5 minutes. Do any of these aggregation ideas sound like something you would want to build?
+
