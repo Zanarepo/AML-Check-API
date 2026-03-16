@@ -4,10 +4,16 @@ from typing import Optional, List
 import datetime
 import uuid
 
-from app.core.config import get_settings
-from app.core.database import get_supabase_client
-from app.api.dependencies import verify_api_key_header, verify_user_session, verify_user_organization
-from app.core.security import generate_api_key
+try:
+    from app.core.config import get_settings
+    from app.core.database import get_supabase_client
+    from app.api.dependencies import verify_api_key_header, verify_user_session, verify_user_organization
+    from app.core.security import generate_api_key
+except ImportError:
+    from core.config import get_settings
+    from core.database import get_supabase_client
+    from api.dependencies import verify_api_key_header, verify_user_session, verify_user_organization
+    from core.security import generate_api_key
 from supabase import Client
 
 settings = get_settings()
