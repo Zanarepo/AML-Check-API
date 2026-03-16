@@ -31,10 +31,20 @@ app.add_middleware(
 
 # --- Pydantic Models for the API ---
 class ScreeningRequest(BaseModel):
-    search_term: str = Field(..., example="Osama Bin Laden", description="The exact name of the individual or entity")
+    search_term: str = Field(..., description="The exact name of the individual or entity")
     entity_type: Optional[str] = Field(None, description="individual, entity, vessel, or aircraft")
     fuzziness_threshold: Optional[float] = Field(0.8, ge=0.0, le=1.0, description="Confidence threshold for a match (0-1)")
-    country: Optional[str] = Field(None, example="NG", description="ISO Alpha-2 code")
+    country: Optional[str] = Field(None, description="ISO Alpha-2 code")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "search_term": "Chi Fu CHANG",
+                "entity_type": None,
+                "fuzziness_threshold": 0.8,
+                "country": None
+            }
+        }
 
 # --- Background Task for Audit Logging ---
 def log_audit_trail(org_id: str, endpoint: str, query_data: dict, status: int, db: Client):
