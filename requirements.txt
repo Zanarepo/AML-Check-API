@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+supabase
+slowapi
+python-dotenv
+pydantic-settings
+pdfplumber
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+sentence-transformers
