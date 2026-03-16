@@ -2,6 +2,8 @@
 1B: African/Nigerian Scraper (Hard): Build the scrapers for the NFIU and EFCC Wanted List. This will be harder because these websites are often unstructured.
 1C: PDF OCR Pipeline (Very Hard): The CBN (Central Bank of Nigeria) publishes its frozen account lists and directives as PDF files. We need to build a pipeline using pdfplumber or Tesseract OCR to physically read the text off those PDFs and extract the sanctioned names.
 1D: Automation Job: We need to set up a Cron Scheduler (like GitHub Actions) to run these scripts automatically at 2:00 AM every single night so the database is always 100% up to date.
+
+
 Phase 2: The Fuzzy Matching Algorithm (The Core Value)
 Our API currently does an exact string check (e.g., if "victor" in name), which defeats the purpose of the product.
 

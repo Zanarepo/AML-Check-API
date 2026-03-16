@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShieldGuard | Security Personnel Registration</title>
+    <style>
+        :root {
+            --brand: #0f172a;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 2rem; }
+        .portal { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; }
+        .header { background: var(--brand); color: white; padding: 2rem; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        .content { padding: 2rem; }
+        
+        .form-row { margin-bottom: 2rem; }
+        .setup-box { background: #eff6ff; border: 1px solid #dbeafe; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; }
+        label { display: block; font-weight: 700; margin-bottom: 0.5rem; color: #475569; }
+        input, select { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+        
+        .btn { 
+            background: var(--accent); color: white; border: none; padding: 1rem 2rem; 
+            border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .screening-active { animation: pulse 2s infinite; }
+        @keyframes pulse { 
+            0% { opacity: 1; } 
+            50% { opacity: 0.7; } 
+            100% { opacity: 1; } 
+        }
+
+        #result-area { margin-top: 2rem; display: none; }
+        .status-card { padding: 1.5rem; border-radius: 8px; border-left: 6px solid #ccc; }
+        .status-card.approved { background: #ecfdf5; border-color: var(--success); color: #065f46; }
+        .status-card.rejected { background: #fef2f2; border-color: var(--danger); color: #991b1b; }
+        
+        .match-item { background: white; border: 1px solid rgba(0,0,0,0.05); padding: 1rem; margin-top: 0.5rem; border-radius: 4px; }
+        
+        .debug-log { font-family: monospace; font-size: 0.75rem; background: #1e293b; color: #38bdf8; padding: 1rem; border-radius: 4px; margin-top: 2rem; overflow-x: auto; max-height: 200px; }
+    </style>
+</head>
+<body>
+
+<div class="portal">
+    <div class="header">
+        <h1>ShieldGuard Security Firm</h1>
+        <p style="opacity: 0.7; font-size: 0.8rem;">Official Personnel Registration Portal</p>
+    </div>
+
+    <div class="content">
+        <!-- Technical Configuration Section -->
+        <div class="setup-box">
+            <label>AML API INTEGRATION KEY</label>
+            <input type="text" id="api_key" placeholder="Enter sk_test_... or sk_live_..." value="">
+            <p style="font-size: 0.75rem; color: #3b82f6; margin-top: 0.5rem;">
+                This key is used to authenticate with <code>http://127.0.0.1:8000/v1/screen</code>
+            </p>
+        </div>
+
+        <form id="registration-form">
+            <div class="form-row">
+                <label>Applicant Full Name</label>
+                <input type="text" id="applicant_name" placeholder="Legal full name" required>
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label>Role</label>
+                    <select>
+                        <option>Armed Guard</option>
+                        <option>Bouncer</option>
+                        <option>VIP Escort</option>
+                        <option>Surveillance Officer</option>
+                    </select>
+                </div>
+                <div>
+                    <label>ID Type</label>
+                    <select>
+                        <option>National ID</option>
+                        <option>International Passport</option>
+                        <option>Driver's License</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn" class="btn">Process Registration</button>
+        </form>
+
+        <div id="result-area">
+            <div id="status-card" class="status-card">
+                <h3 id="status-title"></h3>
+                <p id="status-message"></p>
+                <div id="match-details"></div>
+            </div>
+            
+            <div class="debug-log">
+                <strong>[INTEGRATION DEBUG LOG]</strong>
+                <div id="log-content">Portal ready. Waiting for submission...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('registration-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const resultArea = document.getElementById('result-area');
+    const statusCard = document.getElementById('status-card');
+    const statusTitle = document.getElementById('status-title');
+    const statusMessage = document.getElementById('status-message');
+    const matchDetails = document.getElementById('match-details');
+    const logContent = document.getElementById('log-content');
+
+    function log(msg) {
+        const time = new Date().toLocaleTimeString();
+        logContent.innerHTML += `\n[${time}] ${msg}`;
+        logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('applicant_name').value;
+        const apiKey = document.getElementById('api_key').value;
+        
+        if (!apiKey) {
+            alert("Please provide an AML API Key first.");
+            return;
+        }
+
+        // UI Reset
+        submitBtn.disabled = true;
+        submitBtn.innerText = "SCREENING APPLICANT...";
+        submitBtn.classList.add('screening-active');
+        resultArea.style.display = 'block';
+        log(`Initiating screening for: "${name}"`);
+
+        try {
+            // STEP 1: Connect to AML API (Bearer Token Integration)
+            log(`STAGING: Fetching http://127.0.0.1:8000/v1/screen`);
+            
+            const response = await fetch('http://127.0.0.1:8000/v1/screen', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey.trim()}`
+                },
+                body: JSON.stringify({
+                    search_term: name,
+                    fuzziness_threshold: 0.8  // High standard for security firms
+                })
+            });
+
+            log(`RESPONSE STATUS: ${response.status} ${response.statusText}`);
+
+            if (response.status === 401) {
+                const errorData = await response.json();
+                statusCard.className = 'status-card';
+                statusTitle.innerText = "AUTHENTICATION ERROR (401)";
+                statusMessage.innerText = errorData.detail || "API Key rejected.";
+                matchDetails.innerHTML = `
+                    <div style="background: #fffbeb; border: 1px solid #fef3c7; padding: 1rem; color: #92400e; margin-top: 1rem;">
+                        <b>Troubleshooting:</b><br>
+                        1. Go to your <a href="http://localhost:3000/dashboard" target="_blank">AML Dashboard</a><br>
+                        2. Click <b>"Roll Key"</b> to generate a fresh API Key.<br>
+                        3. Ensure you copy the <b>Raw Key</b> (starts with sk_test_ or sk_live_).
+                    </div>`;
+                log(`AUTH FAILED: Internal detail: ${errorData.detail}`);
+                return;
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "API Connection Failed");
+            }
+
+            const data = await response.json();
+            log(`DATA RECEIVED: ${JSON.stringify(data).substring(0, 100)}...`);
+
+            // STEP 2: Business Logic based on API Results
+            if (data.match_found) {
+                statusCard.className = 'status-card rejected';
+                statusTitle.innerText = "REGISTRATION BLOCKED: COMPLIANCE ALERT";
+                statusMessage.innerText = `Applicant "${name}" has been flagged on global sanctions/watchlists. Integration successfully detected a level ${data.highest_confidence * 100}% match.`;
+                
+                matchDetails.innerHTML = '<strong>Matches Found:</strong>';
+                data.results.forEach(m => {
+                    matchDetails.innerHTML += `
+                        <div class="match-item">
+                            <b>${m.entity_name}</b> (${(m.similarity * 100).toFixed(1)}%)<br>
+                            <small>Source: ${m.source_list} | Reason: ${m.reason_for_sanction}</small>
+                        </div>`;
+                });
+                log(`COMPLIANCE: Blocked registration due to AML flag.`);
+            } else {
+                statusCard.className = 'status-card approved';
+                statusTitle.innerText = "REGISTRATION APPROVED";
+                statusMessage.innerText = `Applicant "${name}" cleared global compliance screening. No AML matches found.`;
+                matchDetails.innerHTML = '';
+                log(`COMPLIANCE: Clear. Proceeding with personnel file creation.`);
+            }
+
+        } catch (err) {
+            log(`FATAL ERROR: ${err.message}`);
+            statusCard.className = 'status-card';
+            statusTitle.innerText = "INTEGRATION ERROR";
+            statusMessage.innerText = err.message;
+            matchDetails.innerHTML = 'Check if your Python backend is running at 127.0.0.1:8000';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Process Registration";
+            submitBtn.classList.remove('screening-active');
+        }
+    });
+</script>
+
+</body>
+</html>

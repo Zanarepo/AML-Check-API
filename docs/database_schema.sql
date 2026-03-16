@@ -3,12 +3,33 @@
 -- Enable the pgvector extension for fuzzy/similarity search
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 1. Organizations (The B2B Customers)
+-- 1. Plan Tiers (Defining limits and pricing)
+CREATE TABLE IF NOT EXISTS plan_tiers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT UNIQUE NOT NULL, -- 'Free', 'Pro', 'Enterprise'
+    monthly_limit INTEGER NOT NULL DEFAULT 1000,
+    price_monthly DECIMAL(10, 2) DEFAULT 0.00,
+    features JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert/Update default tiers with explicit feature flags (Idempotent)
+INSERT INTO plan_tiers (name, monthly_limit, price_monthly, features) VALUES
+('Free', 1000, 0.00, '{"show_details": false, "can_filter_country": false}'),
+('Pro', 5000, 49.00, '{"show_details": true, "can_filter_country": true, "api_access": true}'),
+('Enterprise', 50000, 299.00, '{"show_details": true, "can_filter_country": true, "api_access": true, "priority_support": true, "custom_lists": true}')
+ON CONFLICT (name) DO UPDATE SET
+    monthly_limit = EXCLUDED.monthly_limit,
+    price_monthly = EXCLUDED.price_monthly,
+    features = EXCLUDED.features;
+
+-- 2. Organizations (The B2B Customers)
 -- A user can belong to an organization. API keys belong to the organization.
 CREATE TABLE organizations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
-    plan_tier TEXT DEFAULT 'free' CHECK (plan_tier IN ('free', 'pro', 'enterprise')),
+    plan_tier_id UUID REFERENCES plan_tiers(id),
+    is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -38,6 +59,28 @@ BEGIN
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- Trigger to fire the function on new user signup
 CREATE TRIGGER on_auth_user_created
@@ -89,13 +132,24 @@ CREATE TABLE audit_logs (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Performance Indices for Audit Logs
+CREATE INDEX idx_audit_logs_org_timestamp ON audit_logs(organization_id, timestamp DESC);
+CREATE INDEX idx_audit_logs_query_search ON audit_logs USING gin ((query_parameters->'search_term'));
+
+
 -- --- ROW LEVEL SECURITY (RLS) POLICIES ---
 -- Ensures users can only see data belonging to their own organization
 
+ALTER TABLE plan_tiers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- Plan tiers are public for viewing
+CREATE POLICY "Plan tiers are viewable by all"
+ON plan_tiers FOR SELECT
+USING (true);
 
 -- Users can read their own profile
 CREATE POLICY "Users can view own profile" 

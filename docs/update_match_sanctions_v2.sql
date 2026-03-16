@@ -1,11 +1,12 @@
--- SQL for setting up Vector Similarity Search in Supabase
+-- Migration: Update Match Sanctions Function (v2)
+-- Adds support for optional country and entity type filtering.
 
--- 1. Create a function to perform the fuzzy search
--- This function calculates the cosine similarity between the query and stored entity names.
-CREATE OR REPLACE FUNCTION match_sanctions (
+CREATE OR REPLACE FUNCTION public.match_sanctions (
   query_embedding vector(384),
   match_threshold float,
-  match_count int
+  match_count int,
+  filter_country text DEFAULT NULL,
+  filter_type text DEFAULT NULL
 )
 RETURNS TABLE (
   id UUID,
@@ -33,7 +34,9 @@ BEGIN
     sanctions_entities.country_of_origin,
     1 - (sanctions_entities.name_embedding <=> query_embedding) AS similarity
   FROM sanctions_entities
-  WHERE 1 - (sanctions_entities.name_embedding <=> query_embedding) > match_threshold
+  WHERE (1 - (sanctions_entities.name_embedding <=> query_embedding) > match_threshold)
+    AND (filter_country IS NULL OR sanctions_entities.country_of_origin = filter_country)
+    AND (filter_type IS NULL OR sanctions_entities.entity_type = filter_type)
   ORDER BY sanctions_entities.name_embedding <=> query_embedding
   LIMIT match_count;
 END;

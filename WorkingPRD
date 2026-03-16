@@ -1,72 +1,79 @@
-# Product Requirements Document (PRD): Sanctions & Compliance API
+Product Requirements Document (PRD): Sanctions & Compliance API
+1. Executive Summary
+Product Name: AML Check API (Working Title)
+Objective: Provide a fast, reliable, and easy-to-integrate REST API for global and Pan-African Fintechs, Crypto exchanges, and Neobanks to screen users against global and local African watchlists.
+Target Audience: Developers and compliance officers at B2B fintechs, specifically targeting the African ecosystem (Nigeria, Kenya, South Africa).
+Value Proposition: Eliminate engineering overhead spent parsing messy global files and scraping local African PDFs. One /screen endpoint with built-in fuzzy matching to ensure compliance across multiple jurisdictions.
 
-## 1. Executive Summary
-**Product Name:** AML Check API (Working Title)
-**Objective:** Provide a fast, reliable, and easy-to-integrate REST API for global and Pan-African Fintechs, Crypto exchanges, and Neobanks to screen users against global terrorist, government sanction lists, and local African watchlists.
-**Target Audience:** Software developers and compliance officers at B2B financial tech companies, with a strong focus on the African Fintech ecosystem (e.g., Nigeria, Kenya, South Africa).
-**Value Proposition:** Eliminate engineering overhead spent parsing messy government files and scraping African PDFs. One `/screen` endpoint with built-in fuzzy matching to maintain legal compliance and prevent regulatory fines across global and African jurisdictions.
-
-## 2. Core Problem & Solution
-
-### The Problem
-*   **Regulatory Burden:** Financial institutions are legally barred from transacting with entities on lists like OFAC (US), HMT (UK), UN Consolidated List, and local lists like Nigeria's NFIU/CBN directives.
-*   **Data Quality:** Government sources are unpredictable and messy (legacy XML, massive CSVs, and non-standardized PDFs that require OCR).
-*   **Matching Complexity:** "Exact match" search is ineffective. Catching "Jon Doe" when the list says "John Doe" requires complex fuzzy-search data engineering.
-
-### The Solution
+2. Core Problem & Solution
+The Problem
+Regulatory Burden: Institutions are legally barred from transacting with entities on lists like OFAC (US), UN, and local lists like Nigeria’s NFIU/CBN directives.
+Data Quality: Sources are fragmented and messy (legacy XML, massive CSVs, and non-standardized PDFs requiring OCR).
+Matching Complexity: "Exact match" search is ineffective. Identifying "Jon Doe" against "John Doe" requires complex fuzzy-search engineering.
+The Solution
 A fully managed API that:
-*   **Ingests & Normalizes:** Daily automated pulls from the top global and African government sources into a unified, clean database.
-*   **Fuzzy Searching:** A JSON-based endpoint that returns a match probability score for names and metadata.
-*   **Audit Logs:** Secure transaction history to provide "Proof of Diligence" during regulatory audits.
+Ingests & Normalizes: Daily automated pulls from top global and African government sources into a unified, clean database.
+Fuzzy Searching: A JSON-based endpoint returning a match probability score based on names and metadata.
+Audit Logs: Secure transaction history providing "Proof of Diligence" for regulatory audits.
 
-## 3. Product Requirements & Features
+3. Product Requirements & Features
+V1 Features (MVP)
+Single Search Endpoint: POST /v1/screen
+Input: Name (Individual/Company), Country, Date of Birth (Optional).
+Output: Match Score (0−100%), Matched Entity Details, Source List, and Source Links.
+Fuzzy Matching Algorithm: Handles misspellings, missing middle names, and phonetic similarities (e.g., Stephen vs. Steven).
+Automated Daily Ingestion: Nightly workers to parse/normalize US OFAC, UK HMT, UN, Nigeria NFIU, and Nigeria CBN/EFCC (including PDF OCR).
+Developer Portal: Simple dashboard for API key management and usage tracking.
+Tiered Rate Limiting: Free (100 req/mo) vs. Pro (10,000 req/mo) tiers.
+V2 Features (Roadmap)
+Webhooks: Proactive alerts when an existing customer is added to a list post-onboarding.
+PEP Verification: Integration of Politically Exposed Persons (PEP) data.
+Compliance Dashboard: UI for manual review and "False Positive" flagging.
 
-### V1 Features (MVP)
-*   **Single Search Endpoint:** `POST /v1/screen`
-    *   *Input:* Name (Individual/Company), Country, Date of Birth (Optional).
-    *   *Output:* Match Score (0-100%), Matched Entity Details, Source List, and Source Links.
-*   **Fuzzy Matching Algorithm:** Handles misspellings, missing middle names, and phonetic similarities (e.g., Stephen vs. Steven).
-*   **Automated Daily Ingestion:** Nightly workers to parse/normalize US OFAC, UK HMT, UN, Nigeria NFIU, and Nigeria CBN/EFCC (including PDF OCR).
-*   **Developer Portal:** Simple dashboard for API key management and usage tracking.
-*   **Tiered Rate Limiting:** Free (100 req/mo) vs. Pro (10,000 req/mo) tiers.
+4. Technical Architecture
+Architecture Overview
+Ingestion Layer: Nightly cron jobs pulling XML/CSV and PDF documents from global and African government servers.
+Normalization Layer: Standardizes date formats, name splitting, and column mapping.
+Search Index: Optimized database built specifically for high-speed fuzzy-text matching.
+API Gateway: Stateless backend for authentication, querying, and logging.
+MVP Data Sources
+Global:
+US OFAC: Specially Designated Nationals (SDN) List.
+UN Consolidated List: UN Security Council sanctions.
+UK HMT: HM Treasury Financial Sanctions Targets.
+African/Nigerian:
+NFIU: Sanctions for terrorism financing, fraud, and money laundering.
+CBN Directives: Circulars and lists of frozen accounts (via PDF OCR/Scraping).
+EFCC Wanted List: Active wanted list for fraud and financial crimes.
 
-### V2 Features (Roadmap)
-*   **Webhooks:** Proactive monitoring; alerts when an existing customer is added to a list post-onboarding.
-*   **PEP Verification:** Expansion into Politically Exposed Persons data.
-*   **Compliance Dashboard:** UI for officers to manually review matches and flag "False Positives."
+5. Technical Stack Recommendations
+Component
+Recommendation
+Rationale
+Search Engine
+Typesense / Meilisearch
+High-speed phonetic/typo-tolerant results compared to standard SQL.
+Backend API
+FastAPI (Python)
+High performance with native Swagger/OpenAPI documentation.
+Data Pipeline
+Python (Pandas/Celery)
+Excellent for data cleaning and OCR (Tesseract) for messy PDFs.
+Primary DB
+PostgreSQL
+Industry standard for relational data (Users, Keys, Audit Logs).
+Infrastructure
+Render / Railway
+Rapid deployment of workers and backends without DevOps overhead.
 
-## 4. Technical Architecture
 
-### Architecture Overview
-*   **Ingestion Layer:** Nightly cron jobs pulling XML/CSV and PDF documents from government servers globally and across Africa.
-*   **Normalization Layer:** Standardizes date formats, name splitting, and column mapping.
-*   **Search Index:** Optimized database built specifically for fuzzy-text matching.
-*   **API Gateway:** Stateless backend for authentication, querying, and logging.
+6. Security & Compliance
+Key Security: API keys are hashed in the database; no plain text storage.
+Encryption: Strict HTTPS/TLS enforcement for all PII transit.
+Privacy: Search queries are stored in encrypted audit logs and never used for AI training (GDPR/NDPR compliant).
 
-### MVP Data Sources
-**Global Sources:**
-*   **US OFAC:** Specifically the SDN (Specially Designated Nationals) List.
-*   **UN Consolidated List:** UN Security Council sanctions.
-*   **UK HMT:** HM Treasury Consolidated List of Financial Sanctions Targets.
+7. GTM (Go To Market) Strategy
+The Hook: "The Unified Compliance API for Global and Pan-African Fintechs. Stop building OFAC parsers and scraping CBN PDFs."
+Documentation First: Marketing centered on beautiful, functional API documentation (ReadMe/Swagger).
+Targeting: CTOs and Compliance Heads at Seed/Series A Fintechs across Africa (e.g., Paystack, Moniepoint) and global firms expanding into the continent.
 
-**African/Nigerian Sources:**
-*   **Nigeria Financial Intelligence Unit (NFIU):** Sanctions Updates for terrorism financing, fraud, and money laundering. Mandatory for CBN/EFCC compliance.
-*   **Central Bank of Nigeria (CBN) Directives:** Circulars and lists of frozen accounts (Requires PDF OCR/Scraping).
-*   **EFCC Wanted List:** Active wanted list for fraud and financial crimes, serving as a critical risk-mitigation tool.
-
-## 5. Technical Stack Recommendations
-*   **Search Engine:** Typesense / Meilisearch (High-speed phonetic/typo-tolerant results).
-*   **Backend API:** FastAPI (Python) (High performance and auto-generated Swagger documentation).
-*   **Data Pipeline:** Python (Pandas/Celery) (The best ecosystem for cleaning messy data and managing background workers, plus OCR libraries like Tesseract for PDFs).
-*   **Primary DB:** PostgreSQL (Reliable storage for relational data: users, API keys, and audit logs).
-*   **Infrastructure:** Render / Railway (Fast deployment of workers and backends without AWS-level DevOps overhead).
-
-## 6. Security & Compliance
-*   **Key Security:** API keys must be hashed in the database; no plain text storage.
-*   **Encryption:** Strict HTTPS/TLS enforcement for all PII data transit.
-*   **Privacy:** Search queries are stored in encrypted audit logs and never used for AI training or plain-text logging (GDPR compliant).
-
-## 7. GTM (Go To Market) Strategy
-*   **The Hook:** "The Unified Compliance API for Global and Pan-African Fintechs. Stop building OFAC parsers and scraping CBN PDFs. Start screening in 5 minutes."
-*   **Dev-Centric Docs:** Marketing centered on beautiful, functional API documentation (ReadMe/Swagger).
-*   **Direct Sales:** Targeting CTOs and Compliance Heads at Seed/Series A Fintechs across Africa (e.g., Paystack, Moniepoint) and globally who need to move fast without dedicated compliance engineering teams.
