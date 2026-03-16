@@ -168,6 +168,9 @@ async def screen_entity(
         return results
     except HTTPException: raise
     except Exception as e:
+        import traceback
+        print(f"Error in /v1/screen: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/v1/dashboard/screen", tags=["Dashboard"])
