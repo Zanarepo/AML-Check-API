@@ -208,18 +208,14 @@ export function DashboardProvider({ children }) {
   const copyToClipboard = () => {
     let keyToCopy = revealedKey || (isLive ? liveKey : testKey);
     
-    // Only block if it's the LIVE key and it's still masked
-    if (isLive && keyToCopy.includes("••••")) {
-      alert("Please complete KYB verification to unlock your Live key.");
+    if (keyToCopy.includes("••••")) {
+      if (isLive) {
+        alert("Please complete KYB verification to unlock your Live key.");
+      } else {
+        alert("To view your secret Test key, please click the 'Rotate/Refresh' icon next to the key. For security, keys are only visible when first generated.");
+      }
       return;
     }
-
-    // If it's a TEST key and still masked, tip them to roll it
-    if (!isLive && keyToCopy.includes("••••") && !revealedKey) {
-      alert("Please click the 'Roll Key' icon to generate your first Test API Key.");
-      return;
-    }
-
     navigator.clipboard.writeText(keyToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

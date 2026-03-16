@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Zap, Globe, Cpu } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { API_URL } from '@/lib/constants';
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -47,7 +46,7 @@ export default function Home() {
             {isLoggedIn ? "Go to Dashboard" : "Start Screening Now"}
           </Link>
           <a
-            href={`${API_URL}/docs`}
+            href="http://127.0.0.1:8000/docs"
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-outline main-cta"

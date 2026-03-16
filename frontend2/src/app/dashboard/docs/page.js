@@ -15,7 +15,6 @@ import {
   ArrowLeft 
 } from 'lucide-react';
 import Link from 'next/link';
-import { API_URL } from '@/lib/constants';
 
 
 export default function DocsPage() {
@@ -93,7 +92,7 @@ export default function DocsPage() {
 import json
 
 def aml_check(name):
-    url = "${API_URL}/v1/screen"
+    url = "https://api.amlcheck.pro/v1/screen"
     headers = {
         "x-api-key": "sk_live_v2_f82...",
         "Content-Type": "application/json"
@@ -112,7 +111,7 @@ if result['match_found']:
     print(f"Match Detected! Score: {result['highest_confidence']}")`;
 
   const jsCode = `const screenEntity = async (name) => {
-  const url = "${API_URL}/v1/screen";
+  const url = "https://api.amlcheck.pro/v1/screen";
   
   const response = await fetch(url, {
     method: 'POST',
