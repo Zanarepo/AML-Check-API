@@ -101,8 +101,9 @@ export function DashboardProvider({ children }) {
   }, []);
 
   async function fetchStats(token) {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
     try {
-      const res = await fetch('http://127.0.0.1:8000/v1/org/usage', {
+      const res = await fetch(`${API_URL}/v1/org/usage`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -141,7 +142,8 @@ export function DashboardProvider({ children }) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const payload = { search_term: searchTerm, fuzziness_threshold: options.threshold || 0.8, entity_type: options.type || "individual", country: options.country || null };
-      const response = await fetch('http://127.0.0.1:8000/v1/dashboard/screen', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const response = await fetch(`${API_URL}/v1/dashboard/screen`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify(payload)
@@ -165,7 +167,8 @@ export function DashboardProvider({ children }) {
     setIsRolling(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://127.0.0.1:8000/v1/org/keys/rotate?is_live=${isLive}`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const response = await fetch(`${API_URL}/v1/org/keys/rotate?is_live=${isLive}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
