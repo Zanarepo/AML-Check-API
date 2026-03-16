@@ -6,5 +6,6 @@ slowapi
 python-dotenv
 pydantic-settings
 pdfplumber
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
 sentence-transformers
-torch --index-url https://download.pytorch.org/whl/cpu
