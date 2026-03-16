@@ -38,7 +38,7 @@ app.add_middleware(
 # --- Pydantic Models for the API ---
 class ScreeningRequest(BaseModel):
     search_term: str = Field(..., example="Osama Bin Laden", description="The exact name of the individual or entity")
-    entity_type: Optional[str] = Field("individual", description="individual, entity, vessel, or aircraft")
+    entity_type: Optional[str] = Field(None, description="individual, entity, vessel, or aircraft")
     fuzziness_threshold: Optional[float] = Field(0.8, ge=0.0, le=1.0, description="Confidence threshold for a match (0-1)")
     country: Optional[str] = Field(None, example="NG", description="ISO Alpha-2 code")
 
@@ -114,6 +114,7 @@ async def perform_screening(request: ScreeningRequest, organization: dict, db: C
     embedding = model.encode(request.search_term).tolist()
     
     # 4. Search DB (Vector Match)
+    print(f"DEBUG: Searching for '{request.search_term}' (Type: {request.filter_type if hasattr(request, 'filter_type') else request.entity_type}, Threshold: {request.fuzziness_threshold})")
     rpc_response = db.rpc("match_sanctions", {
         "query_embedding": embedding,
         "match_threshold": request.fuzziness_threshold,
@@ -123,6 +124,7 @@ async def perform_screening(request: ScreeningRequest, organization: dict, db: C
     }).execute()
     
     results = rpc_response.data if rpc_response.data else []
+    print(f"DEBUG: Found {len(results)} matches in DB.")
     
     # 5. Translate and Scrub
     for r in results:
