@@ -86,8 +86,10 @@ export function DashboardProvider({ children }) {
         ]).then(([orgRes, keysRes, sessionRes]) => {
           if (orgRes.data) setIsVerified(orgRes.data.is_verified);
           if (keysRes.data) {
-            if (keysRes.data.find(k => k.prefix === 'sk_test')) setTestKey("sk_test_••••••••••••••••");
-            if (keysRes.data.find(k => k.prefix === 'sk_live')) setLiveKey("sk_live_••••••••••••••••");
+            const tKey = keysRes.data.find(k => k.prefix === 'sk_test');
+            const lKey = keysRes.data.find(k => k.prefix === 'sk_live');
+            if (tKey) setTestKey("sk_test_••••••••••••••••"); // Keep masked for security until revealed
+            if (lKey) setLiveKey("sk_live_••••••••••••••••");
           }
           if (sessionRes.data.session) {
             fetchStats(sessionRes.data.session.access_token);
