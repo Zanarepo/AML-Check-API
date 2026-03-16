@@ -4,10 +4,11 @@ from supabase import Client
 from app.core.database import get_supabase_client
 from app.core.security import hash_api_key
 
-bearer_scheme = HTTPBearer()
+# One shared scheme for Swagger to avoid duplicates
+security_scheme = HTTPBearer(scheme_name="APIKeyHeader", description="Enter your sk_test_ or sk_live_ key (or the User JWT for dashboard routes)")
 
 async def verify_api_key_header(
-    token: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    token: HTTPAuthorizationCredentials = Depends(security_scheme),
     db: Client = Depends(get_supabase_client)
 ) -> dict:
     """
@@ -78,11 +79,8 @@ async def verify_api_key_header(
         print(f"Auth Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error during Authentication")
 
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-auth_scheme = HTTPBearer()
-
 async def verify_user_session(
-    token: HTTPAuthorizationCredentials = Depends(auth_scheme),
+    token: HTTPAuthorizationCredentials = Depends(security_scheme),
     db: Client = Depends(get_supabase_client)
 ) -> dict:
     """
