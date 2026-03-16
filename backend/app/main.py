@@ -56,9 +56,16 @@ def log_audit_trail(org_id: str, endpoint: str, query_data: dict, status: int, d
 
 from sentence_transformers import SentenceTransformer
 
-# --- Initialize AI Model ---
-print("Loading AI Embedding Model (all-MiniLM-L6-v2)...")
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# --- Initialize AI Model Lazily ---
+_model = None
+
+def get_model():
+    global _model
+    if _model is None:
+        print("Loading AI Embedding Model (all-MiniLM-L6-v2) on demand...")
+        _model = SentenceTransformer('all-MiniLM-L6-v2')
+        print("AI Model Loaded Successfully.")
+    return _model
 
 # --- Program Code Translator ---
 PROGRAM_CODE_MAPPING = {
@@ -103,6 +110,7 @@ async def perform_screening(request: ScreeningRequest, organization: dict, db: C
         raise HTTPException(status_code=403, detail="Advanced filtering (country) is not available on your current plan. Please upgrade to Pro.")
 
     # 3. Generate Embedding
+    model = get_model()
     embedding = model.encode(request.search_term).tolist()
     
     # 4. Search DB (Vector Match)
