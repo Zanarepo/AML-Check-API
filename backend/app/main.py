@@ -4,16 +4,10 @@ from typing import Optional, List
 import datetime
 import uuid
 
-try:
-    from app.core.config import get_settings
-    from app.core.database import get_supabase_client
-    from app.api.dependencies import verify_api_key_header, verify_user_session, verify_user_organization
-    from app.core.security import generate_api_key
-except ImportError:
-    from core.config import get_settings
-    from core.database import get_supabase_client
-    from api.dependencies import verify_api_key_header, verify_user_session, verify_user_organization
-    from core.security import generate_api_key
+from app.core.config import get_settings
+from app.core.database import get_supabase_client
+from app.api.dependencies import verify_api_key_header, verify_user_session, verify_user_organization
+from app.core.security import generate_api_key
 from supabase import Client
 
 settings = get_settings()
@@ -54,14 +48,13 @@ def log_audit_trail(org_id: str, endpoint: str, query_data: dict, status: int, d
     except Exception as e:
         print(f"Failed to write audit log: {e}")
 
-from sentence_transformers import SentenceTransformer
-
 # --- Initialize AI Model Lazily ---
 _model = None
 
 def get_model():
     global _model
     if _model is None:
+        from sentence_transformers import SentenceTransformer
         print("Loading AI Embedding Model (all-MiniLM-L6-v2) on demand...")
         _model = SentenceTransformer('all-MiniLM-L6-v2')
         print("AI Model Loaded Successfully.")

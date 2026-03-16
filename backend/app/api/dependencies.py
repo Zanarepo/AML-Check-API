@@ -5,7 +5,7 @@ from app.core.database import get_supabase_client
 from app.core.security import hash_api_key
 
 # One shared scheme for Swagger to avoid duplicates
-security_scheme = HTTPBearer(scheme_name="APIKeyHeader", description="Enter your sk_test_ or sk_live_ key (or the User JWT for dashboard routes)")
+security_scheme = HTTPBearer()
 
 async def verify_api_key_header(
     token: HTTPAuthorizationCredentials = Depends(security_scheme),
